@@ -1,10 +1,15 @@
-#SQLModel learning
-from sqlmodel import SQLModel,Field,create_engine,Session 
+from sqlmodel import SQLModel, Field, create_engine, Session
 
-class Lead(SQLModel,table = True):
-    id: int | None = Field(default = None, primary_key = True)
+class Company(SQLModel, table = True):
+    id:int | None = Field(default = None, primary_key = True)
     name:str
-    company:str
+    typeofwork:str
+    salary:int
+
+class UserInfo(SQLModel,table=True):
+    id:int | None = Field(default = None, primary_key=True)
+    email:str
+    username:str
     budget:int
 
 DATABASE_URL = "postgresql://postgres:admin123@localhost/fastapi_learning"
