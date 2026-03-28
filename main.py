@@ -1,31 +1,44 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
+from database import engine, get_session
+from models import SQLModel, Lead
+from schemas import LeadCreate, LeadResponse
+from sqlmodel import Session , select
+
 app = FastAPI()
 
-
+SQLModel.metadata.create_all(engine)
 @app.post("/leads")
-def create_leads():
-    return {"message": "create new leads"}
-
-@app.delete("/leads")
-def delete_leads():
-    return {"message":"delete leads"}
-
-@app.get("/leads/{lead_id}")
-def get_lead(lead_id: int):
-    return{"lead_id":lead_id}
+def create_lead(lead: LeadCreate , session:Session = Depends(get_session)):
+    db_lead = Lead.model_validate(lead)
+    session.add(db_lead)
+    session.commit()
+    session.refresh(db_lead)
+    return db_lead
 
 @app.get("/leads")
-def get_leads(page: int = 1):
-    return{"page":page, "message":f"page {page} leads"}
+def get_leads(session:Session = Depends(get_session)):
+    leads = session.exec(select(Lead)).all()
+    return leads
 
-@app.get("/users/{user_id}")
-def get_user(user_id:int, page:int = 1):
-    return{"user_id":user_id, "page":page}
+@app.put("/leads/{lead_id}")
+def update_lead(lead_id:int, lead:LeadCreate, session:Session = Depends(get_session)):
+    db_lead = session.get(Lead, lead_id)
+    if not db_lead:
+        raise HTTPException(status_code = 404 , detail = "lead not found")
+    
+    lead_data = lead.model_dump()
+    for key, value in lead_data.items():
+        setattr(db_lead, key, value)
+    session.add(db_lead)
+    session.commit()
+    session.refresh(db_lead)
+    return db_lead
 
-@app.get("/products/{product_id}")
-def get_product(product_id: int, category: str = "all"):
-    return {"product_id":product_id, "category":category}
-
-@app.get("/orders/{order_id}")
-def get_order(order_id: int , status: str = "pending"):
-    return{"order_id":order_id, "status":status}
+@app.delete("/leads/{lead_id}")
+def delete_lead(lead_id:int, session:Session = Depends(get_session)):
+    db_lead = session.get(Lead, lead_id)
+    if not db_lead:
+        raise HTTPException(status_code = 404, detail = "lead not found")
+    session.delete(db_lead)
+    session.commit()
+    return {"message": "Lead delete successfully"}
