@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException
 from database import engine, get_session
 from models import SQLModel, Lead
-from schemas import LeadCreate, LeadResponse
+from schemas import LeadCreate, LeadResponse,UserInfoCreate
 from sqlmodel import Session , select
 
 app = FastAPI()

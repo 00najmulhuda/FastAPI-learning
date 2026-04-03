@@ -14,3 +14,8 @@ class LeadResponse(BaseModel):
     company:str
     message:str
     is_qualified:bool
+
+class UserInfoCreate(BaseModel):
+    username:str
+    email:str
+    budget:int
