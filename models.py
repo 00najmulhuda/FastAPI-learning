@@ -21,5 +21,5 @@ class Lead(SQLModel, table = True):
     company:str
     message:str
     is_qualified:bool = Field(default = False)
-    user_id:int = Field(foreign_key = "userinfo.id")
+    user_id:int = Field(foreign_key = "userinfo.id", ondelete = "CASCADE")
     user:"UserInfo" = Relationship(back_populates = "leads")

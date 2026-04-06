@@ -6,6 +6,7 @@ class LeadCreate(BaseModel):
     email:str
     company:str
     message:str
+    user_id:int
 
 class LeadResponse(BaseModel):
     id:int 

@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from database import engine, get_session
-from models import SQLModel, Lead
+from models import SQLModel, Lead, UserInfo 
 from schemas import LeadCreate, LeadResponse,UserInfoCreate
 from sqlmodel import Session , select
 
@@ -42,3 +42,27 @@ def delete_lead(lead_id:int, session:Session = Depends(get_session)):
     session.delete(db_lead)
     session.commit()
     return {"message": "Lead delete successfully"}
+
+
+@app.post("/users")
+def create_user(user:UserInfoCreate, session:Session = Depends(get_session)):
+    db_user = UserInfo.model_validate(user)
+    session.add(db_user)
+    session.commit()
+    session.refresh(db_user)
+    return db_user
+
+
+@app.get("/users/{user_id}/leads")
+def get_user_leads(user_id:int, session:Session = Depends(get_session)):
+    leads = session.exec(select(Lead).where(Lead.user_id == user_id)).all()
+    return leads
+
+@app.delete("/users/{user_id}")
+def delete_user(user_id:int, session:Session = Depends(get_session)):
+    db_user = session.get(UserInfo, user_id)
+    if not db_user:
+        raise HTTPException(status_code = 404, detail = "user not found")
+    session.delete(db_user)
+    session.commit()
+    return {"message": "user delete successfully"}
