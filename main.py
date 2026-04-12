@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
 from database import engine, get_session
-from models import SQLModel, Lead, UserInfo 
+from models import SQLModel, Lead, UserInfo, Tag, LeadTag
 from schemas import LeadCreate, LeadResponse,UserInfoCreate
 from sqlmodel import Session , select
 
@@ -66,3 +66,19 @@ def delete_user(user_id:int, session:Session = Depends(get_session)):
     session.delete(db_user)
     session.commit()
     return {"message": "user delete successfully"}
+
+@app.post("/tags")
+def create_tag(tag: Tag, session:Session = Depends(get_session)):
+    session.add(tag)
+    session.commit()
+    session.refresh(tag)
+    return tag
+
+@app.post("/lead-tag")
+def create_lead_tag(lead_tag: LeadTag, session:Session = Depends(get_session)):
+    db_lead = session.get(Lead, lead_tag.lead_id)
+    db_tag = session.get(Tag, lead_tag.tag_id)
+    if not db_lead:
+        raise HTTPException(status_code = 404, detail = "lead not found")
+    if not db_tag:
+        raise HTTPException(status_code = 404, detail = "tag not found")
