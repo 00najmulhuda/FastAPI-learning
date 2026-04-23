@@ -1,16 +1,9 @@
-<<<<<<< HEAD
 from fastapi import FastAPI, Depends, HTTPException, Header 
-=======
-from fastapi import FastAPI, Depends, HTTPException
->>>>>>> acacfb8e2c1439a9be9787b2c26afdadcee1d6ea
 from database import engine, get_session
 from models import SQLModel, Lead, UserInfo, Tag, LeadTag
 from schemas import LeadCreate, LeadResponse,UserInfoCreate
 from sqlmodel import Session , select
-<<<<<<< HEAD
 from security import create_access_token , verify_token
-=======
->>>>>>> acacfb8e2c1439a9be9787b2c26afdadcee1d6ea
 
 app = FastAPI()
 
@@ -89,7 +82,6 @@ def create_lead_tag(lead_tag: LeadTag, session:Session = Depends(get_session)):
     if not db_lead:
         raise HTTPException(status_code = 404, detail = "lead not found")
     if not db_tag:
-<<<<<<< HEAD
         raise HTTPException(status_code = 404, detail = "tag not found")
     session.add(lead_tag)
     session.commit()
@@ -113,6 +105,3 @@ def protected_route(authorization: str = Header()):
     token = authorization.split(" ")[1] #bearer token split and get token (split in 2 parts), [1] means split beare get only token which is in index 1 
     user_id = verify_token(token) #token verify
     return {"message": "access granted", "user_id": user_id}
-=======
-        raise HTTPException(status_code = 404, detail = "tag not found")
->>>>>>> acacfb8e2c1439a9be9787b2c26afdadcee1d6ea
