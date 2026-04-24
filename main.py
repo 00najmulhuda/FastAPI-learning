@@ -3,7 +3,7 @@ from database import engine, get_session
 from models import SQLModel, Lead, UserInfo, Tag, LeadTag
 from schemas import LeadCreate, LeadResponse,UserInfoCreate
 from sqlmodel import Session , select
-from security import create_access_token , verify_token
+from security import create_access_token , verify_token, pwd_context
 
 app = FastAPI()
 
@@ -47,12 +47,19 @@ def delete_lead(lead_id:int, session:Session = Depends(get_session)):
 
 @app.post("/users")
 def create_user(user:UserInfoCreate, session:Session = Depends(get_session)):
-    db_user = UserInfo.model_validate(user)
+    #password hash
+    hashed_password = pwd_context.hash(user.password)
+    #user data convert in dict
+    user_data = user.model_dump()
+    #replace plain pass 
+    user_data["password"] = hashed_password
+    #create DB object
+    db_user = UserInfo(**user_data)
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
     return db_user
-
+    
 
 @app.get("/users/{user_id}/leads")
 def get_user_leads(user_id:int, session:Session = Depends(get_session)):
@@ -65,10 +72,10 @@ def delete_user(user_id:int, session:Session = Depends(get_session)):
     if not db_user:
         raise HTTPException(status_code = 404, detail = "user not found")
     session.delete(db_user)
-    session.commit()
+    session.commit() 
     return {"message": "user delete successfully"}
 
-@app.post("/tags")
+@app.post("/tags") 
 def create_tag(tag: Tag, session:Session = Depends(get_session)):
     session.add(tag)
     session.commit()
@@ -100,8 +107,9 @@ def get_token():
     token = create_access_token({"sub":"1"})
     return {"access_token": token}
 
-@app.get('/protected')
+@app.get("/protected")
 def protected_route(authorization: str = Header()):
     token = authorization.split(" ")[1] #bearer token split and get token (split in 2 parts), [1] means split beare get only token which is in index 1 
     user_id = verify_token(token) #token verify
     return {"message": "access granted", "user_id": user_id}
+

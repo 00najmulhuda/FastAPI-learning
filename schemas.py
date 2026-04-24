@@ -20,3 +20,4 @@ class UserInfoCreate(BaseModel):
     username:str
     email:str
     budget:int
+    password:str

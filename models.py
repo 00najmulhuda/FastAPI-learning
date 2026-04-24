@@ -13,6 +13,7 @@ class UserInfo(SQLModel, table = True):
     email:str
     budget:int
     leads:list ["Lead"] = Relationship(back_populates = "user")
+    password:str
 
 
 class LeadTag(SQLModel, table = True):
