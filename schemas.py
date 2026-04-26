@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 
+
 class LeadCreate(BaseModel):
     name:str
     email:str
@@ -21,3 +22,7 @@ class UserInfoCreate(BaseModel):
     email:str
     budget:int
     password:str
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str

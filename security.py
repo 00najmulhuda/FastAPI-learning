@@ -1,6 +1,7 @@
 from passlib.context import CryptContext
 from jose import jwt, JWTError
 from datetime import datetime, timedelta
+from fastapi import HTTPException
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -17,7 +18,7 @@ def create_access_token(data: dict):
 
 def verify_token(token: str):
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithmss = [ALGORITHM]) #token verifying
+        payload = jwt.decode(token, SECRET_KEY, algorithms = [ALGORITHM]) #token verifying jwt.decode means token is valid , expire or not , do secret key match
         user_id = payload.get("sub")
         if user_id is None:
             raise HTTPException(status_code = 401, detail = "Invalid token")

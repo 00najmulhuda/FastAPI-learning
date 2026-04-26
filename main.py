@@ -1,9 +1,10 @@
-from fastapi import FastAPI, Depends, HTTPException, Header 
+from fastapi import FastAPI, Depends, HTTPException, Header, Body
 from database import engine, get_session
-from models import SQLModel, Lead, UserInfo, Tag, LeadTag
-from schemas import LeadCreate, LeadResponse,UserInfoCreate
-from sqlmodel import Session , select
+from models import Lead, UserInfo, Tag, LeadTag
+from schemas import LeadCreate, LeadResponse,UserInfoCreate, LoginRequest
+from sqlmodel import SQLModel, Session , select
 from security import create_access_token , verify_token, pwd_context
+
 
 app = FastAPI()
 
@@ -107,9 +108,37 @@ def get_token():
     token = create_access_token({"sub":"1"})
     return {"access_token": token}
 
+# @app.get("/protected")
+# def protected_route(authorization: str = Header()):
+#     token = authorization.split(" ")[1] #bearer token split and get token (split in 2 parts), [1] means split beare get only token which is in index 1 
+#     user_id = verify_token(token) #token verify
+#     return {"message": "access granted", "user_id": user_id}
+#UPDATE AND FIX PROTECTED ROUTE
 @app.get("/protected")
-def protected_route(authorization: str = Header()):
-    token = authorization.split(" ")[1] #bearer token split and get token (split in 2 parts), [1] means split beare get only token which is in index 1 
-    user_id = verify_token(token) #token verify
+def protected_route(authorization: str = Header(...)):
+    print("Auth:", authorization)
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code = 401, detail = "invalid token")
+    token = authorization.split(" ")[1]
+    print("Token:", token)
+    user_id = verify_token(token)
     return {"message": "access granted", "user_id": user_id}
+    
+    
 
+@app.post("/login")
+def login(data: LoginRequest, session:Session = Depends(get_session)):
+    user = session.exec(
+        select(UserInfo).where(UserInfo.email == data.email)
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code = 404, detail = "user not found")
+
+    is_valid = pwd_context.verify(data.password, user.password)
+
+    if not is_valid:
+        raise HTTPException(status_code = 404, detail = "invalid password")
+    
+    token = create_access_token({"sub": str(user.id)})
+    return {"access_token": token}
