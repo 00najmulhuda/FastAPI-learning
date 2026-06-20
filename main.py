@@ -4,11 +4,17 @@ from models import Lead, UserInfo, Tag, LeadTag
 from schemas import LeadCreate, LeadResponse,UserInfoCreate, LoginRequest
 from sqlmodel import SQLModel, Session , select
 from security import create_access_token , verify_token, pwd_context
+from auth_routes import router as auth_router
+from auth_models import AuthUser
 
 
 app = FastAPI()
 
+app.include_router(auth_router)
+
 SQLModel.metadata.create_all(engine)
+
+#Leads route --------------------------------------------------------------
 @app.post("/leads")
 def create_lead(lead: LeadCreate , session:Session = Depends(get_session)):
     db_lead = Lead.model_validate(lead)

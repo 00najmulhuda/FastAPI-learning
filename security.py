@@ -7,7 +7,26 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(
+    schemes=["bcrypt"],
+    deprecated="auto"
+    )
+#hash_password -----------------------
+def hash_password(password :str):
+    return pwd_context.hash(password)
+
+
+#verify_password-----------------------
+def verify_password(
+    plain_password : str,
+    hash_password :str):
+
+    return pwd_context.verify(
+        plain_password,
+        hash_password
+    )
+
+
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
