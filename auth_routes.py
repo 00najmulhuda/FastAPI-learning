@@ -3,14 +3,21 @@ from sqlmodel import Session, select
 
 from database import get_session
 from auth_models import AuthUser
-from auth_schemas import RegisterRequest
-from security import hash_password
+from auth_schemas import RegisterRequest, LoginRequest
+from security import hash_password, create_access_token, verify_password, verify_token
+from fastapi.security import OAuth2PasswordBearer
+
+oauth2_scheme = OAuth2PasswordBearer(
+  tokenUrl = "/auth/login"
+)
+
 
 router = APIRouter(
     prefix = "/auth",
     tags = ["Authentication"]
 )
 
+#Register route ------------------------------------------------------------------
 @router.post("/register")
 def register_user(
     user : RegisterRequest,
@@ -30,4 +37,65 @@ def register_user(
 
   return {
     "msg": "user registered successfully"
+  }
+
+
+#Login route ----------------------------------------------
+@router.post("/login")
+def login_user(user : LoginRequest, session : Session = Depends(get_session)):
+  check_email = session.exec(
+    select(AuthUser)
+    .where(AuthUser.email == user.email)
+  ).first()
+  if not check_email:
+    raise HTTPException(
+      status_code = 401,
+      detail = "invalid email or password"
+    )
+  
+  if not verify_password(
+    user.password,
+    check_email.hashed_password
+  ):
+    raise HTTPException(status_code = 401, detail = "invalid email or password")
+
+  access_token = create_access_token(
+    {
+      "sub" : str(check_email.id)
+    }
+  )
+
+  return {
+    "access_token" : access_token,
+    "token_type" : "Bearer"
+  }
+
+#Profile - protected route-----------------------------------------------------------
+@router.get("/profile")
+def get_profile(token : str = Depends(oauth2_scheme)):
+  user_id = verify_token(token)
+
+  return {
+    "message" : "protected route access granted",
+    "user_id" : user_id
+  }
+
+#get user detail Me route --------------------------------------
+@router.get("/me")
+def get_current_user(
+  token : str = Depends(oauth2_scheme),
+  session : Session = Depends(get_session)
+):
+  user_id = verify_token(token)
+
+  db_user = session.exec(select(AuthUser).where(AuthUser.id == int(user_id))).first()
+  if not db_user:
+    raise HTTPException(
+      status_code = 401,
+      detail = "user not found"
+    )
+  return {
+    "id" : db_user.id,
+    "username" : db_user.username,
+    "email" : db_user.email
   }
