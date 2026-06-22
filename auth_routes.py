@@ -61,7 +61,8 @@ def login_user(user : LoginRequest, session : Session = Depends(get_session)):
 
   access_token = create_access_token(
     {
-      "sub" : str(check_email.id)
+      "sub" : str(check_email.id),
+      "role" : check_email.role
     }
   )
 

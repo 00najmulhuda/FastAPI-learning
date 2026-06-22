@@ -9,3 +9,4 @@ class AuthUser(SQLModel, table = True):
     username : str
     email : str
     hashed_password : str
+    role : str = "user"
