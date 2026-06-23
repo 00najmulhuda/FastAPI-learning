@@ -5,11 +5,8 @@ from database import get_session
 from auth_models import AuthUser
 from auth_schemas import RegisterRequest, LoginRequest
 from security import hash_password, create_access_token, verify_password, verify_token
-from fastapi.security import OAuth2PasswordBearer
-
-oauth2_scheme = OAuth2PasswordBearer(
-  tokenUrl = "/auth/login"
-)
+from security import get_current_user
+from security import oauth2_scheme, require_role
 
 
 router = APIRouter(
@@ -83,20 +80,22 @@ def get_profile(token : str = Depends(oauth2_scheme)):
 
 #get user detail Me route --------------------------------------
 @router.get("/me")
-def get_current_user(
-  token : str = Depends(oauth2_scheme),
-  session : Session = Depends(get_session)
+def get_me(
+  current_user = Depends(get_current_user)
 ):
-  user_id = verify_token(token)
+   return{
+    "id" : current_user.id,
+    "username" : current_user.username,
+    "email" : current_user.email,
+    "role" : current_user.role
+   }
 
-  db_user = session.exec(select(AuthUser).where(AuthUser.id == int(user_id))).first()
-  if not db_user:
-    raise HTTPException(
-      status_code = 401,
-      detail = "user not found"
-    )
-  return {
-    "id" : db_user.id,
-    "username" : db_user.username,
-    "email" : db_user.email
-  }
+#admin - only route----------------------------------------
+@router.get("/admin")
+def admin_dashboard(
+  current_user : AuthUser = Depends(require_role("admin"))
+):
+   return {
+    "message" : "welcome admin",
+    "user" : current_user.username
+   }
