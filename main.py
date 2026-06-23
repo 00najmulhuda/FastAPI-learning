@@ -3,7 +3,7 @@ from database import engine, get_session
 from models import Lead, UserInfo, Tag, LeadTag
 from schemas import LeadCreate, LeadResponse,UserInfoCreate, LoginRequest
 from sqlmodel import SQLModel, Session , select
-from security import create_access_token , verify_token, pwd_context
+from security import create_access_token , verify_token, pwd_context, require_role, get_current_user
 from auth_routes import router as auth_router
 from auth_models import AuthUser
 
@@ -29,11 +29,12 @@ def get_leads(session:Session = Depends(get_session)):
     return leads
 
 @app.put("/leads/{lead_id}")
-def update_lead(lead_id:int, lead:LeadCreate, session:Session = Depends(get_session)):
+def update_lead(lead_id:int, lead:LeadCreate, session:Session = Depends(get_session), current_user : AuthUser = Depends(get_current_user)):
     db_lead = session.get(Lead, lead_id)
     if not db_lead:
         raise HTTPException(status_code = 404 , detail = "lead not found")
-    
+    if current_user.role != "admin" and db_lead.user_id != current_user.id:
+        raise HTTPException(status_code = 403, detail = "you can only edit your own leads")
     lead_data = lead.model_dump()
     for key, value in lead_data.items():
         setattr(db_lead, key, value)
@@ -43,13 +44,13 @@ def update_lead(lead_id:int, lead:LeadCreate, session:Session = Depends(get_sess
     return db_lead
 
 @app.delete("/leads/{lead_id}")
-def delete_lead(lead_id:int, session:Session = Depends(get_session)):
+def delete_lead(lead_id:int, session:Session = Depends(get_session), current_user : AuthUser = Depends(require_role("admin"))):
     db_lead = session.get(Lead, lead_id)
     if not db_lead:
         raise HTTPException(status_code = 404, detail = "lead not found")
     session.delete(db_lead)
     session.commit()
-    return {"message": "Lead delete successfully"}
+    return {"message": "Lead delete successfully by admin"}
 
 
 @app.post("/users")
