@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException, Header, Body
+from fastapi import FastAPI, Depends, HTTPException, Header, Body, Request
+from fastapi.responses import JSONResponse
 from database import engine, get_session
 from models import Lead, UserInfo, Tag, LeadTag
 from schemas import LeadCreate, LeadResponse,UserInfoCreate, LoginRequest
@@ -8,7 +9,26 @@ from auth_routes import router as auth_router
 from auth_models import AuthUser
 
 
+
 app = FastAPI()
+
+@app.exception_handler(Exception)
+async def global_exception_handler(
+    request : Request,
+    exc : Exception
+):
+   return JSONResponse(
+    status_code = 500,
+    content = {
+        "success" : False,
+        "message" : "Internal server errorr"
+    }
+   )
+
+@app.get("/test-error")
+def test_error():
+    x = 10/0
+    return x
 
 app.include_router(auth_router)
 

@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, EmailStr
 from typing import Optional
 
 
@@ -18,10 +18,10 @@ class LeadResponse(BaseModel):
     is_qualified:bool
 
 class UserInfoCreate(BaseModel):
-    username:str
-    email:str
+    username:str = Field(min_length = 3, max_length = 30, pattern = r"^[a-zA-Z0-9_]+$")
+    email: EmailStr = Field(max_length = 200)
     budget:int
-    password:str
+    password:str = Field(min_length = 8, max_length = 24)
 
 class LoginRequest(BaseModel):
     email: str

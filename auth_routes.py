@@ -21,6 +21,8 @@ def register_user(
     session : Session = Depends(get_session)
 ):
   check_email = session.exec(select(AuthUser).where(AuthUser.email == user.email)).first()
+  if check_email:
+    raise HTTPException(status_code = 400, detail = "email already registered")
   
   hashed_pw = hash_password(user.password)
   db_user = AuthUser(
