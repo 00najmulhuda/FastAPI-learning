@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlmodel import Session, select
 
 from database import get_session
@@ -7,7 +7,7 @@ from auth_schemas import RegisterRequest, LoginRequest
 from security import hash_password, create_access_token, verify_password, verify_token
 from security import get_current_user
 from security import oauth2_scheme, require_role
-
+import shutil
 
 router = APIRouter(
     prefix = "/auth",
@@ -101,3 +101,26 @@ def admin_dashboard(
     "message" : "welcome admin",
     "user" : current_user.username
    }
+
+
+@router.post("/upload")
+async def upload_file(
+  file : UploadFile = File(...)
+):
+  
+   allowed_types = [
+      "application/pdf",
+      "image/jpeg"
+   ]
+   if file.content_type not in allowed_types:
+      raise HTTPException(
+        status_code = 400,
+        detail = "only PDF and JPEG are allowed"
+   )
+   with open("uploads/" + file.filename, "wb") as buffer:
+       shutil.copyfileobj(file.file, buffer)
+   return {
+      "file_name" : file.filename,
+      "content_type" : file.content_type
+   }
+     
