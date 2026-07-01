@@ -7,10 +7,16 @@ from sqlmodel import SQLModel, Session , select
 from security import create_access_token , verify_token, pwd_context, require_role, get_current_user
 from auth_routes import router as auth_router
 from auth_models import AuthUser
-
+from fastapi.staticfiles import StaticFiles 
 
 
 app = FastAPI()
+
+app.mount(
+    "/uploads",
+    StaticFiles(directory = "uploads"),
+    name = "uploads"
+)
 
 @app.exception_handler(Exception)
 async def global_exception_handler(

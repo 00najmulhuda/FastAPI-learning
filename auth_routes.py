@@ -8,12 +8,22 @@ from security import hash_password, create_access_token, verify_password, verify
 from security import get_current_user
 from security import oauth2_scheme, require_role
 import shutil
+from pydantic import EmailStr
+from email_utils import send_email
+
 
 router = APIRouter(
     prefix = "/auth",
     tags = ["Authentication"]
 )
+#send_email route ----------------------------------------------------------
+@router.post("/send_email")
+async def send_email_api(email: EmailStr):
+  await send_email(email)
 
+  return {
+    "message" : "email sent successfully"
+  }
 #Register route ------------------------------------------------------------------
 @router.post("/register")
 def register_user(
@@ -121,6 +131,7 @@ async def upload_file(
        shutil.copyfileobj(file.file, buffer)
    return {
       "file_name" : file.filename,
-      "content_type" : file.content_type
+      "content_type" : file.content_type,
+      "file_url" : "http://127.0.0.1:8000/uploads/" + file.filename
    }
      
